@@ -16,8 +16,8 @@ import datetime as dt
 from sunpy.map import Map
 import sunpy
 import aiapy.calibrate as ac
-from aiapy.util.exceptions import AiapyUserWarning
-from aiapy.calibrate import normalize_exposure, register, update_pointing, correct_degradation
+from aiapy.utils.exceptions import AIApyUserWarning
+from aiapy.calibrate import register, update_pointing, correct_degradation
 from skimage.transform import SimilarityTransform, warp
 from sunpy.util.exceptions import SunpyUserWarning,SunpyMetadataWarning
 import astropy.units as u
@@ -31,7 +31,7 @@ import warnings
 warnings.filterwarnings('ignore', message=".*dubious year.*")
 warnings.simplefilter('ignore', category=SunpyMetadataWarning)
 warnings.simplefilter('ignore', category=VerifyWarning)
-warnings.simplefilter('ignore', category=AiapyUserWarning)
+warnings.simplefilter('ignore', category=AIApyUserWarning)
 warnings.simplefilter('ignore', category=VerifyWarning)
 
 
@@ -151,6 +151,28 @@ def compute_timestamp(fname):
     # if nothing matched, raise so you know there's a new pattern
     raise ValueError(f"compute_timestamp: cannot parse timestamp from '{fname}'")
 
+def get_pointing_table_from_ts(timestamp):
+    """
+    Get the pointing table for a given timestamp.
+    Parameters:
+    - timestamp: A string in the format 'yyyymmdd_HHMM'.
+    Returns:
+    - A SunPy QTable object containing the pointing table.
+    Raises:
+    - FileNotFoundError: If the pointing table file does not exist.
+    """
+    # Construct the filename based on the timestamp
+    pointing_table_filename = f"pointing_table_{timestamp}.fits"
+    
+    # Check if the file exists
+    if not os.path.exists(pointing_table_filename):
+        raise FileNotFoundError(f"Pointing table file '{pointing_table_filename}' not found.")
+    
+    # Read the pointing table using SunPy's QTable
+    pointing_table = QTable.read(pointing_table_filename, format='fits')
+    
+    return pointing_table
+
 
 def process_aia_map(map_lev1, pointing_tbl=None):
 
@@ -190,7 +212,9 @@ def process_aia_map(map_lev1, pointing_tbl=None):
         #print_stats(map_lev15)
 
     # normalize exposure time so all frame data value is per one second exposure time
-    aia_map = normalize_exposure(map_lev15)
+    # aia_map = normalize_exposure(map_lev15) 
+    # ### normalize_exposure is deprecated, so we do it manually
+    aia_map = map_lev15/map_lev15.exposure_time
 
     aia_corrected = correct_degradation(aia_map)
 

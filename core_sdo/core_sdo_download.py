@@ -8,6 +8,7 @@ and save them to one folder.
 - Skips downloading files that already exist locally.
 
 Authors: Dinesha Hegde: dinesha.hegde@uah.edu
+Modifier: Nawin Ngampoopun, MPS
 Date: November 3, 2025
 """
 
@@ -20,19 +21,19 @@ import drms
 # replace with your email, if you are using for the first time in 
 JSOC you will get a confirmation email from them. Just reply 'yes' to confirm.
 """
-JSOC_EMAIL = "username@domain.com"  
+JSOC_EMAIL = "nawinnga@gmail.com"  
 # ============================================
 
-# time range
+# time range setup for the export query. You can modify these values as needed.
 start_time = "2012.01.30_22:00:00_TAI"
-duration   = "24m"
-cadence    = "12m"
+duration   = "2d" ## d=day, h=hour, m=minute, s=second
+cadence    = "60m"
 
 # Get the directory where the current script is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Define the relative folder path
-TARGET_FOLDER = os.path.join(BASE_DIR, "../core_sdo_fits")
+TARGET_FOLDER = os.path.join(BASE_DIR, "../core_sdo_fits") ## modify this to your target folder
 
 # Create the target folder if it doesn't exist
 os.makedirs(TARGET_FOLDER, exist_ok=True)
@@ -73,29 +74,29 @@ def download_export(export, target_folder):
 
 # ================== CHANNEL LIST =============
 channels = [
-    # --- 7 AIA EUV (12 s) ---
-    {"series": "aia.lev1_euv_12s", "wavel": "94"},
-    {"series": "aia.lev1_euv_12s", "wavel": "131"},
-    {"series": "aia.lev1_euv_12s", "wavel": "171"},
-    {"series": "aia.lev1_euv_12s", "wavel": "193"},
-    {"series": "aia.lev1_euv_12s", "wavel": "211"},
-    {"series": "aia.lev1_euv_12s", "wavel": "304"},
-    {"series": "aia.lev1_euv_12s", "wavel": "335"},
+    # --- 7 AIA EUV (12 s) --- comment out the one we don't want to download.
+    # {"series": "aia.lev1_euv_12s", "wavel": "94"},
+    # {"series": "aia.lev1_euv_12s", "wavel": "131"},
+    # {"series": "aia.lev1_euv_12s", "wavel": "171"},
+    # {"series": "aia.lev1_euv_12s", "wavel": "193"},
+    {"series": "aia.lev1_euv_12s", "wavel": "211"}, ### Probably download this one for now
+    # {"series": "aia.lev1_euv_12s", "wavel": "304"},
+    # {"series": "aia.lev1_euv_12s", "wavel": "335"},
 
     # --- AIA UV 1600 (24 s) ---
-    {"series": "aia.lev1_uv_24s", "wavel": "1600"},
+    # {"series": "aia.lev1_uv_24s", "wavel": "1600"},
 
     # --- HMI LOS magnetogram ---
-    {"series": "hmi.M_720s"},
+    # {"series": "hmi.M_720s"},
 
     # --- HMI Doppler ---
-    {"series": "hmi.V_720s"},
+    # {"series": "hmi.V_720s"},
 
     # --- HMI vector (4 segments) ---
-    {
-        "series": "hmi.B_720s",
-        "segments": ["inclination", "azimuth", "disambig", "field"],
-    },
+    # {
+    #     "series": "hmi.B_720s",
+    #     "segments": ["inclination", "azimuth", "disambig", "field"],
+    # },
 ]
 
 
