@@ -21,7 +21,7 @@ import drms
 # replace with your email, if you are using for the first time in 
 JSOC you will get a confirmation email from them. Just reply 'yes' to confirm.
 """
-JSOC_EMAIL = "nawinnga@gmail.com"  
+JSOC_EMAIL = "your-email@gmail.com"  
 # ============================================
 
 # time range setup for the export query. You can modify these values as needed.
