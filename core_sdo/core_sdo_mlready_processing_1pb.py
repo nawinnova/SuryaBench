@@ -31,6 +31,7 @@ from sunpy.map import Map
 import hdf5plugin  # for LZ4 compression / filter 32004
 
 import helio
+import ch_function
 
 # CONFIG
 VALID_PASSBANDS = (94, 131, 171, 193, 211, 304, 335, 1600)
@@ -74,6 +75,24 @@ def apply_superpixel(aia_map, superpixel, func_name="sum"):
     func = {"sum": np.sum, "mean": np.mean}[func_name]
     return aia_map.superpixel([superpixel, superpixel] * u.pixel, func=func)
 
+def generate_CH_parameters(aia_map, lat_range, lon_range):
+    """
+    Generate a coronal hole (CH) mask from an AIA map using Otsu's thresholding method.
+
+    Parameters:
+    - aia_map: SunPy Map object of the AIA image.
+
+    Returns:
+    - A_CH: float
+        The area ratio of the coronal hole to the segmented area.
+    - P_CH: float
+        The factor of CH brightness.
+    """
+    ch_mask = ch_function.find_ch_otsu(aia_map)
+    segmented_map = ch_function.segment_coord(aia_map, lat_range, lon_range, coord_system='heliographic_stonyhurst')
+    A_CH, P_CH = ch_function.calculate_chparam(ch_mask, segmented_map)
+
+    return A_CH, P_CH
 
 def sdo_fits_to_mlready_netcdf_for_timestamp(
     fits_path,
@@ -84,6 +103,7 @@ def sdo_fits_to_mlready_netcdf_for_timestamp(
     nc_compression_type="LZ4",
     superpixel=1,
     superpixel_func="sum",
+    ch_calc=True,
 ):
     """
     Process the AIA FITS file for ONE passband at ONE timestamp and write a
@@ -156,6 +176,19 @@ def sdo_fits_to_mlready_netcdf_for_timestamp(
     # processed meta (includes updated pixel scale / reference pixel if binned)
     meta1 = aia_map.meta
 
+    ## add coronal hole parameters calculation here
+    if ch_calc == True:
+        A_CH_list = {}
+        P_CH_list = {}
+        lat_range_list = [[-30,30]*u.deg, [-60,60]*u.deg, [-90,90]*u.deg]
+        lon_range = [-10,10]*u.deg
+        for lat_range in lat_range_list:
+            lat_name = f"+/-{lat_range[1].value} deg"
+            A_CH, P_CH = generate_CH_parameters(aia_map, lat_range, lon_range)
+            A_CH_list[lat_name] = A_CH
+            P_CH_list[lat_name] = P_CH
+            print(f"Coronal Hole Parameters for {lat_name}: A_CH={A_CH:.2f}, P_CH={P_CH:.2f}")
+
     # get data as float32, replace NaN with 0.0
     xdata = aia_map.data.astype(np.float32)
     np.nan_to_num(xdata, copy=False, nan=0.0)
@@ -180,6 +213,8 @@ def sdo_fits_to_mlready_netcdf_for_timestamp(
             "description": description,
             "meta_0": json.dumps(meta0),
             "meta_1": json.dumps(meta1),
+            "A_CH": json.dumps(A_CH_list) if ch_calc else None,
+            "P_CH": json.dumps(P_CH_list) if ch_calc else None,
         },
     )
 
@@ -219,6 +254,7 @@ def sdo_fits_to_mlready_netcdf_for_timestamp(
         "passband": passband,
         "superpixel": superpixel,
         "superpixel_func": superpixel_func if superpixel > 1 else "none",
+        "CH Parameter ": "included" if ch_calc else "disabled",
         "production_date": dt.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
     }
 
@@ -277,6 +313,8 @@ if __name__ == "__main__":
                         help="Superpixel size N: combine N x N pixels (default: 1 = no binning)")
     parser.add_argument("--superpixel-func", default="sum", choices=("sum", "mean"),
                         help="How to combine pixels in a superpixel (default: sum, sunpy default)")
+    parser.add_argument("--ch-calc", action="store_true",
+                        help="Calculate coronal hole parameters (default: False)")
     args = parser.parse_args()
 
     if args.superpixel < 1:

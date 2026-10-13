@@ -179,3 +179,7 @@ cython_debug/
 *.ckpt
 
 *.pickle
+
+## ignore newly created folders
+core_sdo_fits/
+mlready_core_sdo_nc4/
