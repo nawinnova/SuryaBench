@@ -25,6 +25,7 @@ core_sdo/
 ├── core_sdo_mlready_processing_1pb.py # (New-file) Preprocessing pipeline to create ML-ready NetCDF4 files for 1 passband 
 ├── helio.py                          # Utility functions for solar disk scaling, HMI vector conversion, etc.
 ├── plot_nc.py                        # Quicklook plotter for processed NetCDF4 files
+├── ch_function.py                    # Utility functions to calculate CH properties
 ├── requirements.txt                  # Python dependencies
 ├── README.md                         # Original Documentation
 └── README_NN.md                      # Original Documentation
@@ -55,17 +56,37 @@ python core_sdo_download.py
 ### 2. Process downloaded fits files (basic process)
 ```bash
 cd core_sdo
-python core_sdo_mlready_processing_1pb.py --superpixel 8 --superpixel-func mean
+python core_sdo_mlready_processing_1pb.py --superpixel 8 --superpixel-func sum
 
 ```
 Several argument possible, check the python file or run 
 ```bash
 python core_sdo_mlready_processing_1pb.py --help
 ```
+For example if we want to run processing with extracted CH parameters, run
+```bash
+python core_sdo_mlready_processing_1pb.py --superpixel 8 --superpixel-func sum --ch-calc
+```
 ### 3 Plot a processed maps in the NetCDF4 file
 ```bash
 cd core_sdo
 python plot_nc.py 'filename.nc'
+```
+
+### Simple python code snippet to read .nc file
+```python
+import xarray as xr
+import json
+nc_file = 'path'
+ds = xr.open_dataset(nc_file, engine='h5netcdf')
+variables = list(ds.data_vars)
+data = ds[variables[0]].values
+meta1 = ds[variables[0]].attrs['meta_1']
+# load map metadata as dictionary
+meta1_dict = json.loads(meta1)
+# if we process with CH detection option and want to load CH parameters
+a_ch = json.loads(ds[variables[0]].attrs['A_CH'])
+p_ch = json.loads(ds[variables[0]].attrs['P_CH'])
 ```
 
 ## Contact (this version)
