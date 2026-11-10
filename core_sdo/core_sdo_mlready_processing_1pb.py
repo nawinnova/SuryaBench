@@ -104,6 +104,7 @@ def sdo_fits_to_mlready_netcdf_for_timestamp(
     superpixel=1,
     superpixel_func="sum",
     ch_calc=True,
+    del_fits=True,
 ):
     """
     Process the AIA FITS file for ONE passband at ONE timestamp and write a
@@ -118,6 +119,8 @@ def sdo_fits_to_mlready_netcdf_for_timestamp(
     - nc_compression_type: 'LZ4' or 'zlib'.
     - superpixel: Superpixel size N (N x N pixels combined). 1 = no binning.
     - superpixel_func: 'sum' (sunpy default) or 'mean'.
+    - ch_calc: Whether to calculate coronal hole parameters.
+    - del_fits: Whether to delete the original FITS files after processing.
 
     Returns:
     - None
@@ -276,10 +279,12 @@ def sdo_fits_to_mlready_netcdf_for_timestamp(
     del ds
 
     print(f"made {nc_outfile}")
-
+    if del_fits:
+        os.remove(fname)
+        print(f"deleted original AIA FITS files")
 
 def process_multi_timestamps(fits_path, passband, out_dir, compression="zlib",
-                             superpixel=1, superpixel_func="sum"):
+                             superpixel=1, superpixel_func="sum", del_fits=True):
     """
     Find all timestamps present in the AIA FITS files in this folder and build
     one single-passband NetCDF per timestamp.
@@ -298,6 +303,7 @@ def process_multi_timestamps(fits_path, passband, out_dir, compression="zlib",
             nc_compression_type=compression,
             superpixel=superpixel,
             superpixel_func=superpixel_func,
+            del_fits=del_fits
         )
 
 
